@@ -245,7 +245,7 @@ for i = 3:length(n)
     end
 end
 
-figure()
+
 stem(x,'g')
 hold on
 stem(y2,'r')
