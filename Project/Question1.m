@@ -1,162 +1,117 @@
-%% Final project
-
-clear; clc;
-
-%% Question 1a
-
-w = pi/2; % Hz
-wnoise1 = 7*pi/8; % Hz
-A = 1;
-Anoise = 4;
-n = [0:250];
-signal = A*sin(w.*n);
-noise1 = Anoise*sin(wnoise1.*n);
-
-x = signal+noise1;
-
-r = 0.90;
-mu = 0.005;
-e1 = zeros(1,length(x));
-y1 = zeros(1,length(x));
-a1 = zeros(1,length(x));
-
-a1(1) = 0;
-a1(2) = 0;
-e1(1) = x(1);
-y1(1) = e1(1);
-e1(2) = x(2) + a1(1)*x(1);
-y1(2) = e1(2) - r*a1(1)*y1(1);
-
-a1(3) = a1(2) - mu*y1(2)*x(1);
-
-for i = 3:length(n)
-    e1(i) = x(i) + a1(i)*x(i-1) + x(i-2);
-    y1(i) = e1(i) - r*a1(i)*y1(i-1)-r^2*y1(i-2);
-
-    a1(i+1) = a1(i) - mu*y1(i)*x(i-1);
-    if a1(i+1) < -2
-        a1(i+1) = 0;
+%% Question 1
+clear all;
+clc;
+w0=pi/2;
+n=0:1:1000;
+xdesired=1.*sin(w0.*n);
+%stem(n,xdesired);
+noise=5.*sin((7*pi/8).*n);
+x=noise+xdesired;
+%% part (a)
+mu=0.0005;
+r=0.9;
+e=1:length(n);
+y=1:length(n);
+a=1:length(n);
+a(1)=0;%-2.*cos(w0);
+a(2)=a(1);
+e(1)=x(1);
+e(2)=x(2)+a(2).*x(1);
+y(1)=e(1);
+y(2)=e(2)-r.*a(2).*y(1);
+a(3)=a(2)-mu.*y(2).*x(1);
+for i=3:length(n)
+    e(i)=x(i)+a(i).*x(i-1)+x(i-2);
+    y(i)=e(i)-r.*a(i).*y(i-1)-r^2.*y(i-2);
+    a(i+1)=a(i)-mu.*y(i).*x(i-1);
+    if a(i+1)>2
+        a(i+1)=0;
     end
-    if a1(i+1) > 2
-        a1(i+1) = 0;
-    end
+    if a(i+1)<-2
+         a(i+1)=0;
+     end
 end
-
-
+w=linspace(-pi,pi,256);
+X=dtft(x,w,n);
+Y=dtft(y,w,n);
+H=Y./X;
 figure()
-stem(x,'g')
-hold on
-stem(y1,'r')
-stem(signal,'b')
-legend('x','y','signal')
-title('Notch filter adjusts to signal')
-xlabel('Sample')
-ylabel('Signal')
-hold off
-
-w1 = linspace(-pi,pi,length(x));
-X = dtft(n,w1,x);
-Y = dtft(n,w1,y1);
-
-H = Y./X;
+stem(n,x);hold on
+stem(n,y);hold on
+stem(n,xdesired);
+title('Signal filtered and desired');
+xlabel('Sample'),ylabel('Signal');
+legend('x','y','signal');
 figure()
-plot(w1,H,[-7*pi/8 -7*pi/8],[min(H) max(H)],'r', ...
-    [7*pi/8 7*pi/8],[min(H) max(H)], 'r')
-title('Frequency response of adaptive notch filter')
-xlabel('\omega (rad/s)')
-ylabel('H')
-
+plot(w,abs(H));
+title('Frequency Response of Adaptive Filter');
+xlabel('\omega (rad/s)'),ylabel('Frequency Response');
 figure()
-spectrogram(y1)
-title('High frequencies are cutoff after adaptation to noise frequency')
-
+plot(a);
+title('Convergence of a');
+xlabel('Sample'),ylabel('a');
 figure()
-plot(1:length(a1),a1)
-title('Convergence of coefficient a to constant value')
-xlabel('Sample')
-ylabel('a')
-
-
-%% Question 1b
-
-w = pi/4; % Hz
-wnoise1 = @(n0) 3*pi/4 + pi/1e6*n0; % Hz
-A = 2;
-Anoise = 5;
-n = [0:2000];
-signal = A*sin(w.*n);
-noise1 = Anoise*sin(wnoise1(n).*n);
-
-x = signal+noise1;
-
-r = 0.90;
-mu = 0.005;
-e1 = zeros(1,length(x));
-y1 = zeros(1,length(x));
-a1 = zeros(1,length(x));
-
-a1(1) = -2*cos(w);
-a1(2) = a1(1);
-e1(1) = x(1);
-y1(1) = e1(1);
-e1(2) = x(2) + a1(1)*x(1);
-y1(2) = e1(2) - r*a1(1)*y1(1);
-
-a1(3) = a1(2) - mu*y1(2)*x(1);
-
-for i = 3:length(n)
-    e1(i) = x(i) + a1(i)*x(i-1) + x(i-2);
-    y1(i) = e1(i) - r*a1(i)*y1(i-1)-r^2*y1(i-2);
-
-    a1(i+1) = a1(i) - mu*y1(i)*x(i-1);
-    if a1(i+1) < -2
-        a1(i+1) = 0;
+spectrogram(y);
+title('Spectra');
+%% part (2)
+phi=7*pi/8 + pi/10^5.*n;
+xdesired=1.*sin(w0.*n);
+%stem(n,xdesired);
+noise=5.*sin((phi.*n));
+x=noise+xdesired;
+mu=0.0005;
+r=0.9;
+e=1:length(n);
+y=1:length(n);
+a=1:length(n);
+a(1)=0;%-2.*cos(w0);
+a(2)=a(1);
+e(1)=x(1);
+e(2)=x(2)+a(2).*x(1);
+y(1)=e(1);
+y(2)=e(2)-r.*a(2).*y(1);
+a(3)=a(2)-mu.*y(2).*x(1);
+for i=3:length(n)
+    e(i)=x(i)+a(i).*x(i-1)+x(i-2);
+    y(i)=e(i)-r.*a(i).*y(i-1)-r^2.*y(i-2);
+    a(i+1)=a(i)-mu.*y(i).*x(i-1);
+    if a(i+1)>2
+        a(i+1)=0;
     end
-    if a1(i+1) > 2
-        a1(i+1) = 0;
-    end
+    if a(i+1)<-2
+         a(i+1)=0;
+     end
 end
-
-
+w=linspace(-pi,pi,256);
+X=dtft(x,w,n);
+Y=dtft(y,w,n);
+H=Y./X;
 figure()
-stem(x,'g')
-hold on
-stem(y1,'r')
-stem(signal,'b')
-legend('x','y','signal')
-title('Notch filter adjusts to signal')
-xlabel('Sample')
-ylabel('Signal')
-hold off
-
-w1 = linspace(-pi,pi,length(x));
-X = dtft(n,w1,x);
-Y = dtft(n,w1,y1);
-
-H = Y./X;
+stem(n,x);hold on
+stem(n,y);hold on
+stem(n,xdesired);
+title('Signal filtered and desired');
+xlabel('Sample'),ylabel('Signal');
+legend('x','y','signal');
 figure()
-plot(w1,H)
-title('Frequency response of adaptive notch filter')
-xlabel('\omega (rad/s)')
-ylabel('H')
-
+plot(w,abs(H));
+title('Frequency Response of Adaptive Filter');
+xlabel('\omega (rad/s)'),ylabel('Frequency Response');
 figure()
-spectrogram(y1)
-title('High frequencies are cutoff after adaptation to noise frequency')
-
+plot(a);
+title('Convergence of a');
+xlabel('Sample'),ylabel('a');
 figure()
-plot(1:length(a1),a1)
-title('Convergence of coefficient a to constant value')
-xlabel('Sample')
-ylabel('a')
+spectrogram(y);
+title('Spectra');
 
 %%
 % <latex>
-% The adaptive filter is able to quickly attenuate the noise, but is slow
-% in tracking the change in frequency.  We see this in the oscillations of
-% the convergence plot.  Because the frequency content in x is changing
-% constanly, the filter cannot fully attenuate the noise, but does
-% significantly reduce it.
+% The adaptive filter is able to quickly attenuate the noise, and to track
+% change in frequency.  We see this in the linear pattern in the plot of a.
+% Furthermore, we can see that the moving noise band in the spectrogram plot
+% is considerably attenuated, so the adaptive filter is able to find the new
+% frequency and change with it.
 % </latex>
 
 %% Question 1c
